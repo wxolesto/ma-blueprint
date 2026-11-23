@@ -26,6 +26,10 @@ android {
             keyAlias = "blueprint"
             keyPassword = "blueprint"
         }
+        getByName("debug") {
+            enableV1Signing = true
+            enableV2Signing = true
+        }
     }
 
     buildTypes {
