@@ -105,5 +105,6 @@ class ReminderReceiver : BroadcastReceiver() {
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         Reminders.scheduleAll(context)
+        runCatching { app.blueprint.focus.Pomodoro.restore(context) }
     }
 }

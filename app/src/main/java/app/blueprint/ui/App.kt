@@ -68,6 +68,15 @@ import app.blueprint.ui.screens.ProgressScreen
 import app.blueprint.ui.screens.ScreenBackground
 import app.blueprint.ui.screens.SettingsScreen
 import app.blueprint.ui.screens.TodayScreen
+import app.blueprint.ui.focus.EditTodoScreen
+import app.blueprint.ui.focus.FocusHistoryScreen
+import app.blueprint.ui.focus.FocusScreen
+import app.blueprint.ui.focus.FocusSettingsScreen
+import app.blueprint.ui.focus.LocalTabSelect
+import app.blueprint.ui.focus.TasksScreen
+import app.blueprint.i18n.f
+import androidx.compose.material.icons.rounded.Checklist
+import androidx.compose.material.icons.rounded.Timer
 import app.blueprint.ui.theme.BlueprintTheme
 import app.blueprint.ui.theme.Theme
 import com.kyant.backdrop.backdrops.layerBackdrop
@@ -138,6 +147,9 @@ private fun RouteContent(route: Route, data: AppData, today: Long) {
         is Route.EditHabit -> EditHabitScreen(route)
         Route.History -> HistoryScreen(data, today)
         is Route.HabitDetail -> HabitDetailScreen(data, route.habitId, today)
+        is Route.EditTodo -> EditTodoScreen(data, route.id, today)
+        Route.FocusHistory -> FocusHistoryScreen(data, today)
+        Route.FocusSettings -> FocusSettingsScreen(data)
     }
 }
 
@@ -149,6 +161,8 @@ private fun MainTabs(data: AppData, today: Long) {
     val s = Theme.strings
     val h = Theme.haptics
     var tab by rememberSaveable { mutableIntStateOf(0) }
+    val pending by TabBus.pending.collectAsStateWithLifecycle()
+    LaunchedEffect(pending) { pending?.let { tab = it; TabBus.pending.value = null } }
     val holder = rememberSaveableStateHolder()
     val backdrop = rememberLayerBackdrop { drawRect(c.bg); drawContent() }
     var confetti by remember { mutableStateOf(0) }
@@ -164,10 +178,14 @@ private fun MainTabs(data: AppData, today: Long) {
                 label = "tabs"
             ) { tb ->
                 holder.SaveableStateProvider(tb) {
-                    when (tb) {
-                        0 -> TodayScreen(data, bp, today) { if (data.settings.celebrate) { confetti++; showConfetti = true } }
-                        1 -> ProgressScreen(data, bp, today)
-                        else -> SettingsScreen(data, bp)
+                    CompositionLocalProvider(LocalTabSelect provides { i -> h.tick(); tab = i }) {
+                        when (tb) {
+                            0 -> TodayScreen(data, bp, today) { if (data.settings.celebrate) { confetti++; showConfetti = true } }
+                            1 -> TasksScreen(data, today)
+                            2 -> FocusScreen(data, today)
+                            3 -> ProgressScreen(data, bp, today)
+                            else -> SettingsScreen(data, bp)
+                        }
                     }
                 }
             }
@@ -176,10 +194,10 @@ private fun MainTabs(data: AppData, today: Long) {
             selectedTabIndex = { tab },
             onTabSelected = { if (it != tab) { h.tick(); tab = it } },
             backdrop = backdrop,
-            tabsCount = 3,
-            modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(horizontal = 36.dp).padding(bottom = 10.dp).widthIn(max = 420.dp).fillMaxWidth(),
+            tabsCount = 5,
+            modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(horizontal = 14.dp).padding(bottom = 10.dp).widthIn(max = 460.dp).fillMaxWidth(),
         ) {
-            val items = listOf(Icons.Rounded.CheckCircle to s.today, Icons.Rounded.BarChart to s.progress, Icons.Rounded.Settings to s.settings)
+            val items = listOf(Icons.Rounded.CheckCircle to s.today, Icons.Rounded.Checklist to s.f.tasks, Icons.Rounded.Timer to s.f.focus, Icons.Rounded.BarChart to s.progress, Icons.Rounded.Settings to s.settings)
             items.forEachIndexed { i, (icon, label) ->
                 LiquidBottomTab({ tab = i }) {
                     Icon(icon, label, Modifier.size(26.dp), tint = c.label)
@@ -190,3 +208,6 @@ private fun MainTabs(data: AppData, today: Long) {
         if (showConfetti) Confetti(confetti) { showConfetti = false }
     }
 }
+
+/** lets notifications / intents open a given tab */
+object TabBus { val pending = kotlinx.coroutines.flow.MutableStateFlow<Int?>(null) }

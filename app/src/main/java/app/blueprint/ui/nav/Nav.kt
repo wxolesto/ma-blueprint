@@ -47,6 +47,9 @@ sealed interface Route {
     data object History : Route
     data class HabitDetail(val habitId: String) : Route
     data object NewBlueprint : Route
+    data class EditTodo(val id: String?) : Route
+    data object FocusHistory : Route
+    data object FocusSettings : Route
 }
 
 @Stable

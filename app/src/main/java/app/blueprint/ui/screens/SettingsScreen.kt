@@ -58,6 +58,7 @@ import app.blueprint.ui.nav.LocalNav
 import app.blueprint.ui.nav.LocalOverlay
 import app.blueprint.ui.nav.Route
 import app.blueprint.ui.theme.Theme
+import app.blueprint.i18n.f
 import app.blueprint.ui.theme.habit
 import com.kyant.backdrop.backdrops.emptyBackdrop
 
@@ -116,6 +117,14 @@ fun SettingsScreen(data: AppData, bp: Blueprint) {
                 ListRow(s.addHabit, icon = Icons.Rounded.Add, iconColor = c.green, titleColor = c.blue, onClick = {
                     nav.push(Route.EditHabit(null, true, onSave = { Repository.upsertHabit(it) }))
                 })
+            }
+        }
+        item(key = "focus_h") { SectionHeader(s.f.focus.uppercase()) }
+        item(key = "focus") {
+            Card(Modifier.padding(horizontal = 16.dp)) {
+                ListRow(s.f.focusSettings, icon = Icons.Rounded.Timelapse, iconColor = Color(0xFFFF453A), value = "${s.f.n(data.pomo.focusMin)} · ${s.f.n(data.pomo.shortMin)} · ${s.f.n(data.pomo.longMin)}", chevron = true, onClick = { nav.push(Route.FocusSettings) })
+                Divider(60.dp)
+                ListRow(s.f.history, icon = Icons.Rounded.History, iconColor = Color(0xFF5E5CE6), chevron = true, onClick = { nav.push(Route.FocusHistory) })
             }
         }
         item(key = "app_h") { SectionHeader(s.appearance) }

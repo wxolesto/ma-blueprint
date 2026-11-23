@@ -58,6 +58,10 @@ data class AppData(
     /** epochDay -> note */
     val notes: Map<Long, String> = emptyMap(),
     val settings: Settings = Settings(),
+    val todos: List<Todo> = emptyList(),
+    val sessions: List<FocusSession> = emptyList(),
+    val pomo: PomoSettings = PomoSettings(),
+    val timer: TimerState = TimerState(),
 ) {
     val active: Blueprint? get() = blueprints.firstOrNull { it.id == activeId }
     fun count(habitId: String, day: Long): Int = completions[habitId]?.get(day) ?: 0

@@ -14,9 +14,9 @@ android {
     defaultConfig {
         applicationId = "app.blueprint.habits"
         minSdk = 26
-        targetSdk = 33
-        versionCode = 1
-        versionName = "1.0.0"
+        targetSdk = 37
+        versionCode = 2
+        versionName = "1.1"
     }
 
     signingConfigs {
@@ -25,10 +25,6 @@ android {
             storePassword = "blueprint"
             keyAlias = "blueprint"
             keyPassword = "blueprint"
-        }
-        getByName("debug") {
-            enableV1Signing = true
-            enableV2Signing = true
         }
     }
 
