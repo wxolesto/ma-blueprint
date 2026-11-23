@@ -31,9 +31,10 @@ jobs:
           chmod +x gradlew
           ./gradlew :app:assembleDebug
 
-      - name: Ensure V1 and V2 signatures on debug APK
+      - name: Sign APK for Android compatibility
         shell: bash
         run: |
+          set -euo pipefail
           APK="app/build/outputs/apk/debug/app-debug.apk"
           BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
           KEYSTORE="$HOME/.android/debug.keystore"
@@ -41,8 +42,8 @@ jobs:
           if [ ! -f "$KEYSTORE" ]; then
             keytool -genkeypair -v -keystore "$KEYSTORE" -storepass android -alias androiddebugkey -keypass android -dname "CN=Android Debug,O=Android,C=US" -keyalg RSA -keysize 2048 -validity 10000
           fi
-          "$BUILD_TOOLS/apksigner" sign --ks "$KEYSTORE" --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android --v1-signing-enabled true --v2-signing-enabled true --out "$APK.v1v2" "$APK"
-          mv "$APK.v1v2" "$APK"
+          "$BUILD_TOOLS/apksigner" sign --ks "$KEYSTORE" --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android --min-sdk-version 26 --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true --out "$APK.signed" "$APK"
+          mv "$APK.signed" "$APK"
 
       - name: Diagnose APK package, signature, and alignment
         shell: bash
@@ -53,14 +54,32 @@ jobs:
           echo "=== APK file ==="
           ls -lh "$APK"
           file "$APK"
-          echo "=== APK signature verification for supported Android versions (minSdk from manifest) ==="
-          "$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$APK"
+          echo "=== APK signature verification ==="
+          VERIFY_OUTPUT="$("$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$APK")"
+          echo "$VERIFY_OUTPUT"
+          echo "$VERIFY_OUTPUT" | grep -Fq 'Verified using v2 scheme (APK Signature Scheme v2): true'
+          echo "$VERIFY_OUTPUT" | grep -Fq 'Verified using v3 scheme (APK Signature Scheme v3): true'
           echo "=== APK alignment ==="
           "$BUILD_TOOLS/zipalign" -c -v 4 "$APK"
           echo "=== APK manifest metadata ==="
           "$BUILD_TOOLS/aapt" dump badging "$APK" | head -n 20
           echo "=== Manifest SDK and package fields ==="
           "$BUILD_TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml | grep -E -A 3 -B 2 'uses-sdk|versionCode|versionName|package=' || true
+
+      - name: Install and launch on Android 13 emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          script: |
+            set -e
+            adb install app/build/outputs/apk/debug/app-debug.apk
+            adb shell am start -W -n app.blueprint.habits.debug/app.blueprint.MainActivity
+            sleep 5
+            adb shell pidof app.blueprint.habits.debug
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
