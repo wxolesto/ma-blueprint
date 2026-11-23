@@ -1,0 +1,52 @@
+name: Test APK variants
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  variants:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build and sign all variants
+        shell: bash
+        run: |
+          set -euo pipefail
+          BT="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+          mkdir -p out ~/.android keys
+          # random key (what the old working build used)
+          keytool -genkeypair -keystore keys/random.jks -storepass android -alias androiddebugkey -keypass android -dname "CN=Android Debug,O=Android,C=US" -keyalg RSA -keysize 2048 -validity 10000
+          # fixed key (same one my other apps use)
+          echo "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" | base64 -d > keys/fixed.p12
+          sign() { # in out keystore
+            "$BT/apksigner" sign --ks "$3" --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android --min-sdk-version 26 --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true --out "$2" "$1"
+          }
+          chmod +x gradlew
+          ./gradlew :app:assembleDebug
+          cp app/build/outputs/apk/debug/app-debug.apk base.apk
+          sign base.apk out/v1-fixedkey.apk keys/fixed.p12
+          sign base.apk out/v2-randomkey.apk keys/random.jks
+          sed -i '/USE_EXACT_ALARM/d;/SCHEDULE_EXACT_ALARM/d' app/src/main/AndroidManifest.xml
+          ./gradlew :app:assembleDebug
+          cp app/build/outputs/apk/debug/app-debug.apk base2.apk
+          sign base2.apk out/v3-noperm-randomkey.apk keys/random.jks
+          sign base2.apk out/v4-noperm-fixedkey.apk keys/fixed.p12
+          ls -la out
+
+      - name: Publish variants
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: test-${{ github.run_number }}
+          name: APK test variants #${{ github.run_number }}
+          prerelease: true
+          files: out/*.apk
