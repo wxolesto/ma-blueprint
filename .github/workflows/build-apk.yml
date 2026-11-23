@@ -47,13 +47,18 @@ jobs:
       - name: Diagnose APK package, signature, and alignment
         shell: bash
         run: |
+          set -euo pipefail
           APK="app/build/outputs/apk/debug/app-debug.apk"
           BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
           echo "=== APK file ==="
           ls -lh "$APK"
           file "$APK"
-          echo "=== APK signature verification ==="
+          echo "=== APK signature verification for supported Android versions ==="
           "$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$APK"
+          echo "=== APK V1/JAR signature verification (API 1-23) ==="
+          "$BUILD_TOOLS/apksigner" verify --verbose --min-sdk-version 1 --max-sdk-version 23 "$APK"
+          jarsigner -verify -verbose -certs "$APK" 2>&1 | tee /tmp/jarsigner-verify.log
+          grep -qi "jar verified" /tmp/jarsigner-verify.log
           echo "=== APK alignment ==="
           "$BUILD_TOOLS/zipalign" -c -v 4 "$APK"
           echo "=== APK manifest metadata ==="
