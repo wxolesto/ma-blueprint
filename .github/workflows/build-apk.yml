@@ -12,6 +12,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 40
 
     steps:
       - name: Checkout source
@@ -70,21 +71,6 @@ jobs:
           "$BUILD_TOOLS/aapt" dump badging "$APK" | head -n 20
           echo "=== Manifest SDK and package fields ==="
           "$BUILD_TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml | grep -E -A 3 -B 2 'uses-sdk|versionCode|versionName|package=' || true
-
-      - name: Install and launch on Android 13 emulator
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 33
-          target: google_apis
-          arch: x86_64
-          profile: pixel_2
-          disable-animations: true
-          script: |
-            set -e
-            adb install app/build/outputs/apk/debug/app-debug.apk
-            adb shell am start -W -n app.blueprint.habits.debug/app.blueprint.MainActivity
-            sleep 5
-            adb shell pidof app.blueprint.habits.debug
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
