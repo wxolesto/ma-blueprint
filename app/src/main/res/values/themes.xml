@@ -1,0 +1,11 @@
+<resources>
+    <style name="Theme.Blueprint" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/bg</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+    <color name="bg">#F2F2F7</color>
+    <color name="widget_bg">#FFFFFF</color>
+    <color name="icon_bg">#0B1426</color>
+</resources>
