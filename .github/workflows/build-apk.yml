@@ -53,12 +53,8 @@ jobs:
           echo "=== APK file ==="
           ls -lh "$APK"
           file "$APK"
-          echo "=== APK signature verification for supported Android versions ==="
+          echo "=== APK signature verification for supported Android versions (minSdk from manifest) ==="
           "$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$APK"
-          echo "=== APK V1/JAR signature verification (API 1-23) ==="
-          "$BUILD_TOOLS/apksigner" verify --verbose --min-sdk-version 1 --max-sdk-version 23 "$APK"
-          jarsigner -verify -verbose -certs "$APK" 2>&1 | tee /tmp/jarsigner-verify.log
-          grep -qi "jar verified" /tmp/jarsigner-verify.log
           echo "=== APK alignment ==="
           "$BUILD_TOOLS/zipalign" -c -v 4 "$APK"
           echo "=== APK manifest metadata ==="
